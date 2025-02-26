@@ -20,11 +20,24 @@ import type { Metadata } from "next"
 import { Inter } from "next/font/google"
 import "./globals.css"
 
-const inter = Inter({ subsets: ["latin"] })
+// Load Inter font
+const inter = Inter({
+  subsets: ["latin"],
+  weight: ["400", "700"],
+  variable: "--font-inter"
+})
 
 export const metadata: Metadata = {
-  title: "Mckay's App Template",
-  description: "A full-stack web app template."
+  title: "Tell a Friend - Referral Program",
+  description:
+    "A referral program for small local businesses in the home service industry.",
+  keywords: [
+    "referral",
+    "home service",
+    "house painters",
+    "rewards",
+    "referral program"
+  ]
 }
 
 export default async function RootLayout({
@@ -42,7 +55,16 @@ export default async function RootLayout({
   }
 
   return (
-    <ClerkProvider>
+    <ClerkProvider
+      appearance={{
+        elements: {
+          formButtonPrimary:
+            "bg-tell-a-friend-green hover:bg-tell-a-friend-green/90",
+          footerActionLink:
+            "text-tell-a-friend-green hover:text-tell-a-friend-green/90"
+        }
+      }}
+    >
       <html lang="en" suppressHydrationWarning>
         <body
           className={cn(
