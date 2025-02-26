@@ -24,7 +24,19 @@ const config = {
       }
     },
     extend: {
+      fontFamily: {
+        sans: ['Dunbar', 'sans-serif'],
+      },
       colors: {
+        // Tell a Friend specific colors
+        "tell-a-friend": {
+          green: "#00A86B",
+          black: "#000000",
+          white: "#FFFFFF",
+          background: "#F5F5F5",
+          text: "#333333",
+        },
+        // Default shadcn colors
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",

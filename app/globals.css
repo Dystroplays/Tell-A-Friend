@@ -4,20 +4,30 @@ Global styles for the app.
 </ai_context>
 */
 
+@import url('https://fonts.googleapis.com/css2?family=Dunbar:wght@400;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 0 0% 3.9%;
-    --card: 0 0% 100%;
-    --card-foreground: 0 0% 3.9%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 3.9%;
-    --primary: 0 0% 9%;
-    --primary-foreground: 0 0% 98%;
+    /* Main colors based on design requirements */
+    --tell-a-friend-green: 154 51% 33%; /* #00A86B */
+    --tell-a-friend-black: 0 0% 0%; /* #000000 */
+    --tell-a-friend-white: 0 0% 100%; /* #FFFFFF */
+    --tell-a-friend-background: 0 0% 96%; /* #F5F5F5 */
+    --tell-a-friend-text: 0 0% 20%; /* #333333 */
+    
+    /* Default UI colors */
+    --background: var(--tell-a-friend-background);
+    --foreground: var(--tell-a-friend-text);
+    --card: var(--tell-a-friend-white);
+    --card-foreground: var(--tell-a-friend-text);
+    --popover: var(--tell-a-friend-white);
+    --popover-foreground: var(--tell-a-friend-text);
+    --primary: var(--tell-a-friend-green);
+    --primary-foreground: var(--tell-a-friend-white);
     --secondary: 0 0% 96.1%;
     --secondary-foreground: 0 0% 9%;
     --muted: 0 0% 96.1%;
@@ -28,32 +38,32 @@ Global styles for the app.
     --destructive-foreground: 0 0% 98%;
     --border: 0 0% 89.8%;
     --input: 0 0% 89.8%;
-    --ring: 0 0% 3.9%;
+    --ring: var(--tell-a-friend-green);
     --radius: 0.5rem;
-    --chart-1: 12 76% 61%;
+    --chart-1: 154 51% 33%;
     --chart-2: 173 58% 39%;
     --chart-3: 197 37% 24%;
     --chart-4: 43 74% 66%;
     --chart-5: 27 87% 67%;
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 240 5.3% 26.1%;
-    --sidebar-primary: 240 5.9% 10%;
-    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-background: var(--tell-a-friend-white);
+    --sidebar-foreground: var(--tell-a-friend-text);
+    --sidebar-primary: var(--tell-a-friend-green);
+    --sidebar-primary-foreground: var(--tell-a-friend-white);
     --sidebar-accent: 240 4.8% 95.9%;
     --sidebar-accent-foreground: 240 5.9% 10%;
     --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-ring: var(--tell-a-friend-green);
   }
 
   .dark {
-    --background: 0 0% 3.9%;
-    --foreground: 0 0% 98%;
+    --background: var(--tell-a-friend-black);
+    --foreground: var(--tell-a-friend-white);
     --card: 0 0% 3.9%;
-    --card-foreground: 0 0% 98%;
+    --card-foreground: var(--tell-a-friend-white);
     --popover: 0 0% 3.9%;
-    --popover-foreground: 0 0% 98%;
-    --primary: 0 0% 98%;
-    --primary-foreground: 0 0% 9%;
+    --popover-foreground: var(--tell-a-friend-white);
+    --primary: var(--tell-a-friend-green);
+    --primary-foreground: var(--tell-a-friend-white);
     --secondary: 0 0% 14.9%;
     --secondary-foreground: 0 0% 98%;
     --muted: 0 0% 14.9%;
@@ -64,7 +74,7 @@ Global styles for the app.
     --destructive-foreground: 0 0% 98%;
     --border: 0 0% 14.9%;
     --input: 0 0% 14.9%;
-    --ring: 0 0% 83.1%;
+    --ring: var(--tell-a-friend-green);
     --chart-1: 220 70% 50%;
     --chart-2: 160 60% 45%;
     --chart-3: 30 80% 55%;
@@ -72,12 +82,12 @@ Global styles for the app.
     --chart-5: 340 75% 55%;
     --sidebar-background: 240 5.9% 10%;
     --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-primary: var(--tell-a-friend-green);
+    --sidebar-primary-foreground: var(--tell-a-friend-white);
     --sidebar-accent: 240 3.7% 15.9%;
     --sidebar-accent-foreground: 240 4.8% 95.9%;
     --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-ring: var(--tell-a-friend-green);
   }
 }
 
@@ -87,5 +97,23 @@ Global styles for the app.
   }
   body {
     @apply bg-background text-foreground;
+    font-family: 'Dunbar', sans-serif;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Dunbar', sans-serif;
+    font-weight: 700;
+  }
+  h1 {
+    font-size: 32px;
+  }
+  h2 {
+    font-size: 24px;
+  }
+  h3 {
+    font-size: 20px;
+  }
+  p, span, div, button, input, textarea, select {
+    font-family: 'Dunbar', sans-serif;
+    font-size: 16px;
   }
 }
