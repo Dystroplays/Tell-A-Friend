@@ -4,6 +4,7 @@ Configures Tailwind CSS for the app.
 </ai_context>
 */
 
+
 import type { Config } from "tailwindcss"
 
 const config = {
@@ -25,7 +26,7 @@ const config = {
     },
     extend: {
       fontFamily: {
-        sans: ['Dunbar', 'sans-serif'],
+        sans: ['Inter', 'sans-serif'],
       },
       colors: {
         // Tell a Friend specific colors

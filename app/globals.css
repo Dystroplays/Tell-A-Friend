@@ -4,7 +4,7 @@ Global styles for the app.
 </ai_context>
 */
 
-@import url('https://fonts.googleapis.com/css2?family=Dunbar:wght@400;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -53,6 +53,7 @@ Global styles for the app.
     --sidebar-accent-foreground: 240 5.9% 10%;
     --sidebar-border: 220 13% 91%;
     --sidebar-ring: var(--tell-a-friend-green);
+    --font-inter: var(--font-inter);
   }
 
   .dark {
@@ -97,10 +98,10 @@ Global styles for the app.
   }
   body {
     @apply bg-background text-foreground;
-    font-family: 'Dunbar', sans-serif;
+    font-family: 'Inter', sans-serif;
   }
   h1, h2, h3, h4, h5, h6 {
-    font-family: 'Dunbar', sans-serif;
+    font-family: 'Inter', sans-serif;
     font-weight: 700;
   }
   h1 {
@@ -113,7 +114,7 @@ Global styles for the app.
     font-size: 20px;
   }
   p, span, div, button, input, textarea, select {
-    font-family: 'Dunbar', sans-serif;
+    font-family: 'Inter', sans-serif;
     font-size: 16px;
   }
 }

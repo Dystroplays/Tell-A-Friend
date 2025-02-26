@@ -21,11 +21,7 @@ import { Inter } from "next/font/google"
 import "./globals.css"
 
 // Load Inter font
-const inter = Inter({
-  subsets: ["latin"],
-  weight: ["400", "700"],
-  variable: "--font-inter"
-})
+const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
   title: "Tell a Friend - Referral Program",
@@ -66,12 +62,7 @@ export default async function RootLayout({
       }}
     >
       <html lang="en" suppressHydrationWarning>
-        <body
-          className={cn(
-            "bg-background mx-auto min-h-screen w-full scroll-smooth antialiased",
-            inter.className
-          )}
-        >
+        <body className={cn(inter.className)}>
           <Providers
             attribute="class"
             defaultTheme="light"
