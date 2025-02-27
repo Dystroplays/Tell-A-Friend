@@ -19,26 +19,7 @@ import { auth } from "@clerk/nextjs/server"
 import { eq } from "drizzle-orm"
 import { v4 as uuidv4 } from "uuid"
 import { clerkClient } from "@clerk/nextjs/server"
-
-/**
- * Generate a unique referral code for a user
- * 
- * Creates an 8-character alphanumeric code (excluding ambiguous characters)
- * @returns A unique referral code string
- */
-function generateReferralCode(): string {
-  // Exclude ambiguous characters like 0, O, 1, I, etc.
-  const characters = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-  let result = "";
-  
-  // Generate 8 character code
-  for (let i = 0; i < 8; i++) {
-    const randomIndex = Math.floor(Math.random() * characters.length);
-    result += characters.charAt(randomIndex);
-  }
-  
-  return result;
-}
+import { generateReferralCode } from "@/lib/referral-utils"
 
 /**
  * Create a new user in the database

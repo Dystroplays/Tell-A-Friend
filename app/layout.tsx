@@ -8,17 +8,24 @@ import {
   createProfileAction,
   getProfileByUserIdAction
 } from "@/actions/db/profiles-actions"
+import {
+  createUserAction,
+  getUserByClerkIdAction
+} from "@/actions/db/users-actions"
 import { Toaster } from "@/components/ui/toaster"
 import { PostHogPageview } from "@/components/utilities/posthog/posthog-pageview"
 import { PostHogUserIdentify } from "@/components/utilities/posthog/posthog-user-identity"
 import { Providers } from "@/components/utilities/providers"
 import { TailwindIndicator } from "@/components/utilities/tailwind-indicator"
 import { cn } from "@/lib/utils"
-import { ClerkProvider } from "@clerk/nextjs"
-import { auth } from "@clerk/nextjs/server"
+import { ClerkProvider, UserProfile } from "@clerk/nextjs"
+import { auth, currentUser } from "@clerk/nextjs/server"
+import { cookies } from "next/headers"
 import type { Metadata } from "next"
 import { Inter } from "next/font/google"
 import "./globals.css"
+import { v4 as uuidv4 } from "uuid"
+import { generateReferralCode } from "@/lib/referral-utils"
 
 // Load Inter font
 const inter = Inter({ subsets: ["latin"] })
@@ -41,12 +48,56 @@ export default async function RootLayout({
 }: {
   children: React.ReactNode
 }) {
-  const { userId } = await auth()
+  const { userId: clerkUserId } = await auth()
 
-  if (userId) {
-    const profileRes = await getProfileByUserIdAction(userId)
+  if (clerkUserId) {
+    // Check if user exists in our database
+    const userRes = await getUserByClerkIdAction(clerkUserId)
+
+    if (!userRes.isSuccess) {
+      // User doesn't exist in our database yet - create them
+      // This typically happens right after Clerk authentication
+
+      // Get user details from Clerk
+      const user = await currentUser()
+      if (!user) return null
+
+      // Check for technician referral cookie
+      const cookieStore = await cookies()
+      const referredByTechnicianId = cookieStore.get(
+        "referredByTechnician"
+      )?.value
+
+      // Default to customer role, could be updated later for admin/technicians
+      const role = "customer"
+
+      // Generate unique referral code for customers
+      const referralCode = generateReferralCode()
+
+      // Create user in our database with appropriate role and referral info
+      await createUserAction({
+        id: uuidv4(),
+        clerkUserId: user.id,
+        role,
+        name: `${user.firstName || ""} ${user.lastName || ""}`.trim(),
+        email: user.emailAddresses[0]?.emailAddress || "",
+        phone: user.phoneNumbers[0]?.phoneNumber || "",
+        zipCode: "",
+        referralCode,
+        referredByUserId: referredByTechnicianId
+      })
+
+      // Clear the cookie after use
+      if (referredByTechnicianId) {
+        const cookieStore = await cookies()
+        cookieStore.delete("referredByTechnician")
+      }
+    }
+
+    // Ensure profile exists (handles profile features like Stripe integration)
+    const profileRes = await getProfileByUserIdAction(clerkUserId)
     if (!profileRes.isSuccess) {
-      await createProfileAction({ userId })
+      await createProfileAction({ userId: clerkUserId })
     }
   }
 

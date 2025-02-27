@@ -1,4 +1,5 @@
 import { pgEnum, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core"
+import { relations } from "drizzle-orm"
 
 /**
  * User role enumeration
@@ -36,6 +37,9 @@ export const usersTable = pgTable("users", {
   // Only for customers - unique code used for referrals
   referralCode: text("referral_code").unique(),
 
+  // Tracks which technician referred this customer (for customers only)
+  referredByTechnicianId: uuid("referred_by_technician_id"),
+
   // Audit timestamps
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at")
@@ -43,6 +47,15 @@ export const usersTable = pgTable("users", {
     .notNull()
     .$onUpdate(() => new Date())
 })
+
+// Self-referential relationship - technician can refer customers
+export const usersRelations = relations(usersTable, ({ one }) => ({
+  referredByTechnician: one(usersTable, {
+    fields: [usersTable.referredByTechnicianId],
+    references: [usersTable.id],
+    relationName: "referrer_technician_to_customer"
+  })
+}))
 
 // Types for inserting and selecting data
 export type InsertUser = typeof usersTable.$inferInsert
