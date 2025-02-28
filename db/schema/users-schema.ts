@@ -1,5 +1,7 @@
 import { pgEnum, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core"
 import { relations } from "drizzle-orm"
+import { purchasesTable } from "./purchases-schema"
+import { rewardsTable } from "./rewards-schema"
 
 /**
  * User role enumeration
@@ -48,13 +50,31 @@ export const usersTable = pgTable("users", {
     .$onUpdate(() => new Date())
 })
 
-// Self-referential relationship - technician can refer customers
-export const usersRelations = relations(usersTable, ({ one }) => ({
+/**
+ * Relations configuration for the users table
+ *
+ * This sets up the following relationships:
+ * - Self-referential: technician can refer customers
+ * - User to Purchases (as referrer)
+ * - User to Purchases (as customer)
+ * - User to Rewards
+ */
+export const usersRelations = relations(usersTable, ({ one, many }) => ({
+  // Self-referential relationship for technician referrals
   referredByTechnician: one(usersTable, {
     fields: [usersTable.referredByTechnicianId],
     references: [usersTable.id],
     relationName: "referrer_technician_to_customer"
-  })
+  }),
+
+  // Customers can refer multiple purchases
+  referredPurchases: many(purchasesTable),
+
+  // Customers can make multiple purchases
+  purchases: many(purchasesTable),
+
+  // Users can receive multiple rewards
+  rewards: many(rewardsTable)
 }))
 
 // Types for inserting and selecting data

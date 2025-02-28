@@ -1,98 +1,218 @@
-/*
-<ai_context>
-This API route handles Stripe webhook events to manage subscription status changes and updates user profiles accordingly.
-</ai_context>
-*/
+/**
+ * API route handler for purchases with referral codes
+ *
+ * This endpoint allows creating purchases through HTTP POST requests,
+ * validates referral codes, and associates purchases with referrers.
+ * It can be called from Stripe webhooks or directly from the application.
+ */
 
-import {
-  manageSubscriptionStatusChange,
-  updateStripeCustomer
-} from "@/actions/stripe-actions"
-import { stripe } from "@/lib/stripe"
-import { headers } from "next/headers"
-import Stripe from "stripe"
+import { createPurchaseAction } from "@/actions/db/purchases-actions"
+import { createRewardAction } from "@/actions/db/rewards-actions"
+import { getUserByIdAction } from "@/actions/db/users-actions"
+import { notifyReferralUsedAction } from "@/actions/notifications/send-sms-actions"
+import { notifyReferralUsedEmailAction } from "@/actions/notifications/send-email-actions"
+import { createNotificationAction } from "@/actions/db/notifications-actions"
+import { notifyAdminNewReferralAction } from "@/actions/notifications/send-email-actions"
+import { auth } from "@clerk/nextjs/server"
+import { NextRequest, NextResponse } from "next/server"
+import { v4 as uuidv4 } from "uuid"
 
-const relevantEvents = new Set([
-  "checkout.session.completed",
-  "customer.subscription.updated",
-  "customer.subscription.deleted"
-])
+/**
+ * Configuration for IP address checking
+ */
+export const runtime = "nodejs"
 
-export async function POST(req: Request) {
-  const body = await req.text()
-  const sig = (await headers()).get("Stripe-Signature") as string
-  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET
-  let event: Stripe.Event
-
+/**
+ * POST handler for purchases with referral codes
+ * This endpoint can be used for:
+ * 1. Direct purchase creation from within the app
+ * 2. Webhook integration with payment providers
+ *
+ * @param request The incoming HTTP request
+ * @returns JSON response with success/error information
+ */
+export async function POST(request: NextRequest): Promise<NextResponse> {
   try {
-    if (!sig || !webhookSecret) {
-      throw new Error("Webhook secret or signature missing")
-    }
+    // Get client IP address for fraud prevention
+    const ipAddress = request.headers.get("x-forwarded-for") || "unknown"
 
-    event = stripe.webhooks.constructEvent(body, sig, webhookSecret)
-  } catch (err: any) {
-    console.error(`Webhook Error: ${err.message}`)
-    return new Response(`Webhook Error: ${err.message}`, { status: 400 })
-  }
+    // Parse the request body
+    const body = await request.json()
+    const { referralCode, amount, customerName, customerEmail, description } =
+      body
 
-  if (relevantEvents.has(event.type)) {
-    try {
-      switch (event.type) {
-        case "customer.subscription.updated":
-        case "customer.subscription.deleted":
-          await handleSubscriptionChange(event)
-          break
-
-        case "checkout.session.completed":
-          await handleCheckoutSession(event)
-          break
-
-        default:
-          throw new Error("Unhandled relevant event!")
-      }
-    } catch (error) {
-      console.error("Webhook handler failed:", error)
-      return new Response(
-        "Webhook handler failed. View your nextjs function logs.",
+    // Basic input validation
+    if (!referralCode || !amount || amount <= 0 || !customerName) {
+      return NextResponse.json(
         {
-          status: 400
-        }
+          success: false,
+          message:
+            "Missing required fields: referralCode, amount, and customerName are required"
+        },
+        { status: 400 }
       )
     }
-  }
 
-  return new Response(JSON.stringify({ received: true }))
-}
-
-async function handleSubscriptionChange(event: Stripe.Event) {
-  const subscription = event.data.object as Stripe.Subscription
-  const productId = subscription.items.data[0].price.product as string
-  await manageSubscriptionStatusChange(
-    subscription.id,
-    subscription.customer as string,
-    productId
-  )
-}
-
-async function handleCheckoutSession(event: Stripe.Event) {
-  const checkoutSession = event.data.object as Stripe.Checkout.Session
-  if (checkoutSession.mode === "subscription") {
-    const subscriptionId = checkoutSession.subscription as string
-    await updateStripeCustomer(
-      checkoutSession.client_reference_id as string,
-      subscriptionId,
-      checkoutSession.customer as string
+    // Find the referrer by the provided referral code
+    const allUsersResult = await fetch(
+      `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/api/users?referralCode=${referralCode}`,
+      { method: "GET" }
     )
 
-    const subscription = await stripe.subscriptions.retrieve(subscriptionId, {
-      expand: ["default_payment_method"]
+    const allUsers = await allUsersResult.json()
+
+    if (!allUsers.success || !allUsers.data || allUsers.data.length === 0) {
+      return NextResponse.json(
+        { success: false, message: "Invalid referral code" },
+        { status: 400 }
+      )
+    }
+
+    const referrer = allUsers.data[0]
+
+    // Get or create a customer user
+    // For this endpoint, we'll create a temporary user for the customer if needed
+    // In a real-world scenario, you might want to integrate this with your checkout process
+    let customerId = body.customerId // If provided directly
+
+    if (!customerId) {
+      // Create a temporary customer record
+      const customerUserResult = await fetch(
+        `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/api/users`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            name: customerName,
+            email: customerEmail || `guest-${uuidv4().slice(0, 8)}@example.com`,
+            phone: body.customerPhone || "+11234567890",
+            role: "customer"
+          })
+        }
+      )
+
+      const customerUser = await customerUserResult.json()
+
+      if (!customerUser.success) {
+        return NextResponse.json(
+          { success: false, message: "Failed to create customer record" },
+          { status: 500 }
+        )
+      }
+
+      customerId = customerUser.data.id
+    }
+
+    // Create the purchase record
+    const purchaseResult = await createPurchaseAction({
+      id: uuidv4(),
+      referrerId: referrer.id,
+      customerId,
+      amount: parseFloat(amount).toString(),
+      status: "pending", // Purchases start as pending until verified by admin
+      description: description || "Purchase with referral code",
+      ipAddress
     })
 
-    const productId = subscription.items.data[0].price.product as string
-    await manageSubscriptionStatusChange(
-      subscription.id,
-      subscription.customer as string,
-      productId
+    if (!purchaseResult.isSuccess) {
+      return NextResponse.json(
+        { success: false, message: purchaseResult.message },
+        { status: 500 }
+      )
+    }
+
+    // Create a pending reward for this purchase
+    const rewardAmount = 25.0 // Fixed reward amount of $25
+    const rewardResult = await createRewardAction({
+      id: uuidv4(),
+      purchaseId: purchaseResult.data.id,
+      referrerId: referrer.id,
+      rewardType: "cash", // Default to cash rewards
+      rewardValue: rewardAmount.toString(),
+      status: "pending" // All rewards start as pending until approved by an admin
+    })
+
+    if (!rewardResult.isSuccess) {
+      console.error("Failed to create reward:", rewardResult.message)
+      // Continue processing - we don't want to fail the purchase if reward creation fails
+    }
+
+    // Notify the referrer via SMS and email
+    try {
+      // Send SMS notification if we have the referrer's phone number
+      if (referrer.phone) {
+        await notifyReferralUsedAction(referrer.phone, customerName)
+      }
+
+      // Send email notification
+      if (referrer.email) {
+        await notifyReferralUsedEmailAction(
+          referrer.email,
+          referrer.name,
+          customerName
+        )
+      }
+
+      // Create in-app notification
+      await createNotificationAction({
+        userId: referrer.id,
+        type: "in_app",
+        title: "Your referral code was used!",
+        message: `${customerName} just used your referral code. You'll receive your reward once the purchase is verified.`,
+        status: "pending",
+        data: { purchaseId: purchaseResult.data.id }
+      })
+    } catch (error) {
+      console.error("Failed to send notifications:", error)
+      // Continue processing - we don't want to fail the purchase if notifications fail
+    }
+
+    // Notify admins about the new referral
+    try {
+      // Get all admin users and notify them
+      const adminUsersResult = await fetch(
+        `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/api/users?role=admin`,
+        { method: "GET" }
+      )
+
+      const adminUsers = await adminUsersResult.json()
+
+      if (adminUsers.success && adminUsers.data && adminUsers.data.length > 0) {
+        // Notify the first admin (in a real app, you might want to notify all admins or use a notification service)
+        const adminEmail = adminUsers.data[0].email
+
+        if (adminEmail) {
+          await notifyAdminNewReferralAction(
+            adminEmail,
+            referrer.name,
+            customerName
+          )
+        }
+      }
+    } catch (error) {
+      console.error("Failed to notify admins:", error)
+      // Continue processing - we don't want to fail the purchase if admin notifications fail
+    }
+
+    // Return success response with the created purchase
+    return NextResponse.json({
+      success: true,
+      message: "Purchase created successfully",
+      data: {
+        purchase: purchaseResult.data,
+        reward: rewardResult.isSuccess ? rewardResult.data : null
+      }
+    })
+  } catch (error) {
+    console.error("Error processing purchase:", error)
+
+    return NextResponse.json(
+      {
+        success: false,
+        message:
+          error instanceof Error ? error.message : "Failed to process purchase"
+      },
+      { status: 500 }
     )
   }
 }

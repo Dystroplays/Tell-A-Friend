@@ -7,6 +7,7 @@ import {
   uuid
 } from "drizzle-orm/pg-core"
 import { usersTable } from "./users-schema"
+import { relations } from "drizzle-orm"
 
 /**
  * Purchase status enumeration
@@ -59,6 +60,26 @@ export const purchasesTable = pgTable("purchases", {
     .notNull()
     .$onUpdate(() => new Date())
 })
+
+/**
+ * Relations configuration for the purchases table
+ *
+ * This sets up the relationship between purchases and users:
+ * - Each purchase has one referrer (the user who referred the customer)
+ * - Each purchase has one customer (the user who made the purchase)
+ */
+export const purchasesRelations = relations(purchasesTable, ({ one }) => ({
+  referrer: one(usersTable, {
+    fields: [purchasesTable.referrerId],
+    references: [usersTable.id],
+    relationName: "purchase_referrer"
+  }),
+  customer: one(usersTable, {
+    fields: [purchasesTable.customerId],
+    references: [usersTable.id],
+    relationName: "purchase_customer"
+  })
+}))
 
 // Types for inserting and selecting data
 export type InsertPurchase = typeof purchasesTable.$inferInsert
