@@ -6,7 +6,7 @@
  */
 
 import { auth, currentUser } from "@clerk/nextjs/server"
-import { UserRole } from "@/types/auth-types"
+import { UserRole } from "@/types"
 import { redirect } from "next/navigation"
 
 /**
