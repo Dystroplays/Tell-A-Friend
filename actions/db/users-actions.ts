@@ -230,11 +230,24 @@ export async function createInvitedUserAction(
       };
     }
 
-    const clerk = await clerkClient();
+    // Check if a user with this email already exists in Clerk
+    const clerk = await clerkClient()
+    const existingUsers = await clerk.users.getUserList({
+      emailAddress: [email]
+    });
+    
+    if (existingUsers.data.length > 0) {
+      return {
+        isSuccess: false,
+        message: "A user with this email already exists"
+      };
+    }
+    
+    // Create the user in Clerk
     const clerkUser = await clerk.users.createUser({
       emailAddress: [email],
       firstName: name.split(' ')[0],
-      lastName: name.split(' ').slice(1).join(' '),
+      lastName: name.split(' ').slice(1).join(' ') || undefined,
       skipPasswordRequirement: true,
       publicMetadata: {
         role
