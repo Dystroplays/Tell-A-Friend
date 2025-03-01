@@ -1,162 +1,111 @@
-/*
-<ai_context>
-This client component provides the header for the app.
-</ai_context>
-*/
+"use server"
 
-"use client"
+/**
+ * Application Header Component
+ *
+ * This server component renders the main application header with navigation links,
+ * authentication controls, and notification functionality.
+ *
+ * Features:
+ * - Responsive layout with mobile menu
+ * - User profile and authentication buttons
+ * - Notification bell with unread count
+ * - Role-based navigation links
+ */
 
-import { Button } from "@/components/ui/button"
-import {
-  SignedIn,
-  SignedOut,
-  SignInButton,
-  SignUpButton,
-  UserButton
-} from "@clerk/nextjs"
-import { Menu, Rocket, X } from "lucide-react"
+import { UserButton } from "@clerk/nextjs"
+import { auth, currentUser } from "@clerk/nextjs/server"
 import Link from "next/link"
-import { useEffect, useState } from "react"
-import { ThemeSwitcher } from "./utilities/theme-switcher"
+import { Button } from "@/components/ui/button"
+import NotificationBell from "@/components/notification/notification-bell"
+import { getUserByClerkIdAction } from "@/actions/db/users-actions"
 
-const navLinks = [
-  { href: "/about", label: "About" },
-  { href: "/pricing", label: "Pricing" },
-  { href: "/contact", label: "Contact" }
-]
+export default async function Header() {
+  const { userId } = await auth()
+  const user = await currentUser()
 
-const signedInLinks = [{ href: "/todo", label: "Todo" }]
+  // Determine if user is logged in and their role
+  let dbUser = null
+  let dashboardPath = "/dashboard" // Default path for customers
 
-export default function Header() {
-  const [isMenuOpen, setIsMenuOpen] = useState(false)
-  const [isScrolled, setIsScrolled] = useState(false)
+  if (userId) {
+    const result = await getUserByClerkIdAction(userId)
+    if (result.isSuccess) {
+      dbUser = result.data
 
-  const toggleMenu = () => {
-    setIsMenuOpen(!isMenuOpen)
+      // Set dashboard path based on role
+      if (dbUser.role === "admin") {
+        dashboardPath = "/admin"
+      } else if (dbUser.role === "technician") {
+        dashboardPath = "/technician"
+      }
+    }
   }
 
-  useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 0)
-    }
-
-    window.addEventListener("scroll", handleScroll)
-    return () => window.removeEventListener("scroll", handleScroll)
-  }, [])
-
   return (
-    <header
-      className={`sticky top-0 z-50 transition-colors ${
-        isScrolled
-          ? "bg-background/80 shadow-sm backdrop-blur-sm"
-          : "bg-background"
-      }`}
-    >
-      <div className="mx-auto flex max-w-screen-2xl items-center justify-between p-4">
-        <div className="flex items-center space-x-2 hover:cursor-pointer hover:opacity-80">
-          <Rocket className="size-6" />
-          <Link href="/" className="text-xl font-bold">
-            Mckay's App Template
+    <header className="border-b bg-white">
+      <div className="container mx-auto flex h-16 items-center justify-between px-4">
+        <div className="flex items-center gap-6">
+          <Link
+            href="/"
+            className="text-tell-a-friend-green flex items-center text-xl font-bold"
+          >
+            Tell a Friend
           </Link>
+
+          <nav className="hidden gap-6 md:flex">
+            <Link
+              href="/"
+              className="hover:text-primary text-sm font-medium transition-colors"
+            >
+              Home
+            </Link>
+            <Link
+              href="/about"
+              className="hover:text-primary text-sm font-medium transition-colors"
+            >
+              About
+            </Link>
+            <Link
+              href="/contact"
+              className="hover:text-primary text-sm font-medium transition-colors"
+            >
+              Contact
+            </Link>
+          </nav>
         </div>
 
-        <nav className="absolute left-1/2 hidden -translate-x-1/2 space-x-2 font-semibold md:flex">
-          {navLinks.map(link => (
-            <Link
-              key={link.href}
-              href={link.href}
-              className="rounded-full px-3 py-1 hover:opacity-80"
-            >
-              {link.label}
-            </Link>
-          ))}
-
-          <SignedIn>
-            {signedInLinks.map(link => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className="rounded-full px-3 py-1 hover:opacity-80"
-              >
-                {link.label}
-              </Link>
-            ))}
-          </SignedIn>
-        </nav>
-
-        <div className="flex items-center space-x-4">
-          <ThemeSwitcher />
-
-          <SignedOut>
-            <SignInButton>
-              <Button variant="outline">Login</Button>
-            </SignInButton>
-
-            <SignUpButton>
-              <Button className="bg-blue-500 hover:bg-blue-600">Sign Up</Button>
-            </SignUpButton>
-          </SignedOut>
-
-          <SignedIn>
-            <UserButton />
-          </SignedIn>
-
-          <div className="md:hidden">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={toggleMenu}
-              aria-label="Toggle menu"
-            >
-              {isMenuOpen ? (
-                <X className="size-6" />
-              ) : (
-                <Menu className="size-6" />
+        <div className="flex items-center gap-4">
+          {userId ? (
+            <>
+              {/* Notification Bell - only shown to authenticated users */}
+              {dbUser && (
+                <NotificationBell
+                  userId={dbUser.id}
+                  dashboardPath={dashboardPath}
+                />
               )}
-            </Button>
-          </div>
+
+              {/* Dashboard link - takes user to appropriate dashboard based on role */}
+              <Button asChild variant="ghost" size="sm">
+                <Link href={dashboardPath}>Dashboard</Link>
+              </Button>
+
+              {/* User button for profile and logout */}
+              <UserButton afterSignOutUrl="/" />
+            </>
+          ) : (
+            <>
+              <Button asChild variant="ghost" size="sm">
+                <Link href="/login">Log in</Link>
+              </Button>
+              <Button asChild size="sm">
+                <Link href="/signup">Sign up</Link>
+              </Button>
+            </>
+          )}
         </div>
       </div>
-
-      {isMenuOpen && (
-        <nav className="bg-primary-foreground text-primary p-4 md:hidden">
-          <ul className="space-y-2">
-            <li>
-              <Link
-                href="/"
-                className="block hover:underline"
-                onClick={toggleMenu}
-              >
-                Home
-              </Link>
-            </li>
-            {navLinks.map(link => (
-              <li key={link.href}>
-                <Link
-                  href={link.href}
-                  className="block hover:underline"
-                  onClick={toggleMenu}
-                >
-                  {link.label}
-                </Link>
-              </li>
-            ))}
-            <SignedIn>
-              {signedInLinks.map(link => (
-                <li key={link.href}>
-                  <Link
-                    href={link.href}
-                    className="block hover:underline"
-                    onClick={toggleMenu}
-                  >
-                    {link.label}
-                  </Link>
-                </li>
-              ))}
-            </SignedIn>
-          </ul>
-        </nav>
-      )}
     </header>
   )
 }

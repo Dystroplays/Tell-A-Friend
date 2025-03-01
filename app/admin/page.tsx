@@ -11,16 +11,20 @@
  * - Overview of key metrics (users, referrals, rewards)
  * - User management interface
  * - Reward approval interface
+ * - Notification center
  *
  * @module app/admin/page
  */
 
 import { checkUserRole } from "@/lib/auth-utils"
 import { getUserByClerkIdAction } from "@/actions/db/users-actions"
+import { getPendingRewardsAction } from "@/actions/db/rewards-actions"
+import { getUserNotificationsAction } from "@/actions/db/notifications-actions"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { auth } from "@clerk/nextjs/server"
 import UserManagement from "./_components/user-management"
 import RewardApproval from "./_components/reward-approval"
+import AdminNotifications from "./_components/admin-notifications"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
 export default async function AdminDashboardPage() {
@@ -40,6 +44,22 @@ export default async function AdminDashboardPage() {
       </div>
     )
   }
+
+  // Get counts for dashboard metrics
+  const pendingRewardsResult = await getPendingRewardsAction()
+  const pendingRewardsCount = pendingRewardsResult.isSuccess
+    ? pendingRewardsResult.data.length
+    : 0
+
+  // Get unread notifications count
+  const notificationsResult = await getUserNotificationsAction(
+    currentUser.id,
+    100,
+    false
+  )
+  const unreadNotificationsCount = notificationsResult.isSuccess
+    ? notificationsResult.data.length
+    : 0
 
   return (
     <div className="container mx-auto py-10">
@@ -61,26 +81,33 @@ export default async function AdminDashboardPage() {
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium">
-              Total Referrals
+              Pending Rewards
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">--</div>
-            <p className="text-muted-foreground text-xs">Referrals sent</p>
+            <div className="text-2xl font-bold">{pendingRewardsCount}</div>
+            <p className="text-muted-foreground text-xs">Awaiting approval</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium">
-              Rewards Issued
+              {unreadNotificationsCount > 0 ? (
+                <span className="flex items-center">
+                  Notifications
+                  <span className="bg-primary text-primary-foreground ml-2 inline-flex size-5 items-center justify-center rounded-full text-xs font-bold">
+                    {unreadNotificationsCount}
+                  </span>
+                </span>
+              ) : (
+                "Notifications"
+              )}
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">--</div>
-            <p className="text-muted-foreground text-xs">
-              Total rewards issued
-            </p>
+            <div className="text-2xl font-bold">{unreadNotificationsCount}</div>
+            <p className="text-muted-foreground text-xs">unread</p>
           </CardContent>
         </Card>
       </div>
@@ -88,7 +115,22 @@ export default async function AdminDashboardPage() {
       <Tabs defaultValue="users" className="w-full">
         <TabsList>
           <TabsTrigger value="users">User Management</TabsTrigger>
-          <TabsTrigger value="rewards">Rewards</TabsTrigger>
+          <TabsTrigger value="rewards">
+            Rewards
+            {pendingRewardsCount > 0 && (
+              <span className="bg-primary text-primary-foreground ml-2 inline-flex size-5 items-center justify-center rounded-full text-xs font-bold">
+                {pendingRewardsCount}
+              </span>
+            )}
+          </TabsTrigger>
+          <TabsTrigger value="notifications">
+            Notifications
+            {unreadNotificationsCount > 0 && (
+              <span className="bg-primary text-primary-foreground ml-2 inline-flex size-5 items-center justify-center rounded-full text-xs font-bold">
+                {unreadNotificationsCount}
+              </span>
+            )}
+          </TabsTrigger>
           <TabsTrigger value="statistics">Statistics</TabsTrigger>
         </TabsList>
 
@@ -98,6 +140,10 @@ export default async function AdminDashboardPage() {
 
         <TabsContent value="rewards" className="mt-6">
           <RewardApproval />
+        </TabsContent>
+
+        <TabsContent value="notifications" className="mt-6">
+          <AdminNotifications adminId={currentUser.id} />
         </TabsContent>
 
         <TabsContent value="statistics" className="mt-6">

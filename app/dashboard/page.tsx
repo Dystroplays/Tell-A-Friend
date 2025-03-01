@@ -11,6 +11,7 @@
  * - Display of referral statistics (sent, successful, rewards)
  * - Referral code sharing tools
  * - Rewards history and status
+ * - Notifications center
  *
  * @module app/dashboard/page
  */
@@ -19,11 +20,13 @@ import { checkUserRole } from "@/lib/auth-utils"
 import { getUserByClerkIdAction } from "@/actions/db/users-actions"
 import { getRewardsByReferrerAction } from "@/actions/db/rewards-actions"
 import { getPurchasesByReferrerAction } from "@/actions/db/purchases-actions"
+import { getUserNotificationsAction } from "@/actions/db/notifications-actions"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import ReferralStats from "./_components/referral-stats"
 import ShareReferral from "./_components/share-referral"
 import MyRewards from "./_components/my-rewards"
+import NotificationsTab from "./_components/notifications-tab"
 import { formatReferralCode } from "@/lib/referral-utils"
 
 export default async function CustomerDashboardPage() {
@@ -54,6 +57,13 @@ export default async function CustomerDashboardPage() {
     currentUser.id
   )
 
+  // Get notification data for this user (for unread count)
+  const { data: notifications = [] } = await getUserNotificationsAction(
+    currentUser.id,
+    5,
+    false
+  )
+
   // Calculate statistics
   const totalReferrals = purchases.length
   const successfulReferrals = purchases.filter(
@@ -70,6 +80,9 @@ export default async function CustomerDashboardPage() {
   const approvedRewards = rewards.filter(r => r.status === "approved").length
   const pendingRewards = rewards.filter(r => r.status === "pending").length
   const rejectedRewards = rewards.filter(r => r.status === "rejected").length
+
+  // Count unread notifications
+  const unreadNotificationsCount = notifications.length
 
   // Format the referral code for display
   const formattedReferralCode = formatReferralCode(
@@ -124,14 +137,21 @@ export default async function CustomerDashboardPage() {
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium">
-              Earnings Potential
+              {unreadNotificationsCount > 0 ? (
+                <span className="flex items-center">
+                  Notifications
+                  <span className="bg-primary text-primary-foreground ml-2 inline-flex size-5 items-center justify-center rounded-full text-xs font-bold">
+                    {unreadNotificationsCount}
+                  </span>
+                </span>
+              ) : (
+                "Notifications"
+              )}
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
-              ${(approvedRewards * 25).toFixed(2)}
-            </div>
-            <p className="text-muted-foreground text-xs">$25 per referral</p>
+            <div className="text-2xl font-bold">{unreadNotificationsCount}</div>
+            <p className="text-muted-foreground text-xs">unread messages</p>
           </CardContent>
         </Card>
       </div>
@@ -141,6 +161,14 @@ export default async function CustomerDashboardPage() {
           <TabsTrigger value="share">Share Referral</TabsTrigger>
           <TabsTrigger value="stats">Detailed Stats</TabsTrigger>
           <TabsTrigger value="rewards">My Rewards</TabsTrigger>
+          <TabsTrigger value="notifications">
+            Notifications
+            {unreadNotificationsCount > 0 && (
+              <span className="bg-primary text-primary-foreground ml-2 inline-flex size-5 items-center justify-center rounded-full text-xs font-bold">
+                {unreadNotificationsCount}
+              </span>
+            )}
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="share" className="mt-6">
@@ -156,6 +184,13 @@ export default async function CustomerDashboardPage() {
 
         <TabsContent value="rewards" className="mt-6">
           <MyRewards purchases={purchases} rewards={rewards} />
+        </TabsContent>
+
+        <TabsContent value="notifications" className="mt-6">
+          <NotificationsTab
+            user={currentUser}
+            initialNotifications={notifications}
+          />
         </TabsContent>
       </Tabs>
     </div>

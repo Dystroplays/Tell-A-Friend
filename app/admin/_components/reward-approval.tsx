@@ -12,6 +12,7 @@
  * - Allows approving or rejecting rewards with optional notes
  * - Shows reward type and value
  * - Provides filtering and sorting capabilities
+ * - Sends notifications upon approval or rejection
  *
  * @module app/admin/_components/reward-approval
  */
@@ -51,6 +52,7 @@ import {
   getPendingRewardsAction,
   updateRewardStatusAction
 } from "@/actions/db/rewards-actions"
+import { sendRewardApprovedNotificationAction } from "@/actions/notifications/send-notification-action"
 import { toast } from "@/components/ui/use-toast"
 import { SelectReward } from "@/db/schema/rewards-schema"
 import { formatCurrency } from "@/lib/utils"
@@ -70,6 +72,7 @@ interface ExtendedReward extends SelectReward {
   referrer?: {
     name: string
     email: string
+    phone: string
   }
 }
 
@@ -128,6 +131,13 @@ export default function RewardApproval() {
     try {
       setActionInProgress(true)
 
+      // Get the reward details before updating
+      const reward = pendingRewards.find(r => r.id === rewardId)
+      if (!reward) {
+        throw new Error("Reward not found")
+      }
+
+      // Update the reward status
       const result = await updateRewardStatusAction(
         rewardId,
         status,
@@ -139,6 +149,19 @@ export default function RewardApproval() {
         setPendingRewards(prevRewards =>
           prevRewards.filter(reward => reward.id !== rewardId)
         )
+
+        // Send notification to the referrer if approved
+        if (status === "approved" && reward.referrer) {
+          // Send notification about the approved reward
+          await sendRewardApprovedNotificationAction(
+            reward.referrerId,
+            reward.referrer.name,
+            reward.referrer.email,
+            reward.referrer.phone,
+            reward.rewardType,
+            parseFloat(reward.rewardValue)
+          )
+        }
 
         toast({
           title: "Success",
