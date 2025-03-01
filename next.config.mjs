@@ -9,9 +9,12 @@ const nextConfig = {
   images: {
     remotePatterns: [
       { hostname: "localhost" },
-      { hostname: "fonts.google.com" } // For loading Dunbar font
+      { hostname: "fonts.googleapis.com" }, // For loading Google fonts
+      { hostname: "fonts.gstatic.com" } // For loading Google fonts
     ]
-  }
+  },
+  // Configure Next.js to optimize font loading
+  optimizeFonts: true
 }
 
 export default nextConfig

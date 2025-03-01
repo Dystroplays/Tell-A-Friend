@@ -26,7 +26,7 @@ const config = {
     },
     extend: {
       fontFamily: {
-        sans: ['Inter', 'sans-serif'],
+        dunbar: ['Dunbar', 'sans-serif'],
       },
       colors: {
         // Tell a Friend specific colors

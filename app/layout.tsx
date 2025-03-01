@@ -27,8 +27,12 @@ import "./globals.css"
 import { v4 as uuidv4 } from "uuid"
 import { generateReferralCode } from "@/lib/referral-utils"
 
-// Load Inter font
-const inter = Inter({ subsets: ["latin"] })
+// Load inter font
+const inter = Inter({
+  subsets: ["latin"],
+  weight: ["400", "500", "700"],
+  variable: "--font-Inter"
+})
 
 export const metadata: Metadata = {
   title: "Tell a Friend - Referral Program",
@@ -84,7 +88,7 @@ export default async function RootLayout({
         phone: user.phoneNumbers[0]?.phoneNumber || "",
         zipCode: "",
         referralCode,
-        referredByUserId: referredByTechnicianId
+        referredByTechnicianId: referredByTechnicianId
       })
 
       // Clear the cookie after use

@@ -4,7 +4,7 @@ Global styles for the app.
 </ai_context>
 */
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Dunbar:wght@400;500;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -53,7 +53,7 @@ Global styles for the app.
     --sidebar-accent-foreground: 240 5.9% 10%;
     --sidebar-border: 220 13% 91%;
     --sidebar-ring: var(--tell-a-friend-green);
-    --font-inter: var(--font-inter);
+    --font-dunbar: var(--font-dunbar);
   }
 
   .dark {
@@ -98,10 +98,10 @@ Global styles for the app.
   }
   body {
     @apply bg-background text-foreground;
-    font-family: 'Inter', sans-serif;
+    font-family: 'Dunbar', sans-serif;
   }
   h1, h2, h3, h4, h5, h6 {
-    font-family: 'Inter', sans-serif;
+    font-family: 'Dunbar', sans-serif;
     font-weight: 700;
   }
   h1 {
@@ -114,7 +114,49 @@ Global styles for the app.
     font-size: 20px;
   }
   p, span, div, button, input, textarea, select {
-    font-family: 'Inter', sans-serif;
+    font-family: 'Dunbar', sans-serif;
     font-size: 16px;
+  }
+}
+
+/* Accessibility-focused styles */
+@layer utilities {
+  .focus-visible {
+    @apply outline-none ring-2 ring-offset-2 ring-primary transition-colors;
+  }
+  
+  /* High contrast text for better readability */
+  .high-contrast-text {
+    @apply text-tell-a-friend-black dark:text-tell-a-friend-white;
+  }
+  
+  /* Accessible button styles with proper hover/focus states */
+  .btn-accessible {
+    @apply rounded-md bg-tell-a-friend-green px-4 py-2 text-white transition-colors hover:bg-tell-a-friend-green/90 focus:outline-none focus:ring-2 focus:ring-tell-a-friend-green focus:ring-offset-2;
+  }
+  
+  /* Ensure proper text contrast for important UI elements */
+  .text-accessible {
+    @apply text-tell-a-friend-text dark:text-tell-a-friend-white;
+  }
+}
+
+/* Mobile responsiveness utilities */
+@layer utilities {
+  .responsive-container {
+    @apply mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8;
+  }
+  
+  .responsive-grid {
+    @apply grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4;
+  }
+  
+  .responsive-flex {
+    @apply flex flex-col space-y-4 md:flex-row md:space-x-4 md:space-y-0;
+  }
+  
+  /* Mobile-first card styling */
+  .responsive-card {
+    @apply rounded-lg border bg-card p-4 shadow-sm md:p-6;
   }
 }
