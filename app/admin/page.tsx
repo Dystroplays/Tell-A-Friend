@@ -10,6 +10,7 @@
  * - Role-based access control (admin only)
  * - Overview of key metrics (users, referrals, rewards)
  * - User management interface
+ * - Reward approval interface
  *
  * @module app/admin/page
  */
@@ -19,6 +20,7 @@ import { getUserByClerkIdAction } from "@/actions/db/users-actions"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { auth } from "@clerk/nextjs/server"
 import UserManagement from "./_components/user-management"
+import RewardApproval from "./_components/reward-approval"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
 export default async function AdminDashboardPage() {
@@ -95,17 +97,7 @@ export default async function AdminDashboardPage() {
         </TabsContent>
 
         <TabsContent value="rewards" className="mt-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Reward Management</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p>
-                The reward management interface will be implemented in a future
-                step.
-              </p>
-            </CardContent>
-          </Card>
+          <RewardApproval />
         </TabsContent>
 
         <TabsContent value="statistics" className="mt-6">

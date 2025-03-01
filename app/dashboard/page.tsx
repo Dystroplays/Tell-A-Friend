@@ -10,6 +10,7 @@
  * - Role-based access control (customer only)
  * - Display of referral statistics (sent, successful, rewards)
  * - Referral code sharing tools
+ * - Rewards history and status
  *
  * @module app/dashboard/page
  */
@@ -22,6 +23,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import ReferralStats from "./_components/referral-stats"
 import ShareReferral from "./_components/share-referral"
+import MyRewards from "./_components/my-rewards"
 import { formatReferralCode } from "@/lib/referral-utils"
 
 export default async function CustomerDashboardPage() {
@@ -153,16 +155,7 @@ export default async function CustomerDashboardPage() {
         </TabsContent>
 
         <TabsContent value="rewards" className="mt-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>My Rewards</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p>
-                Your rewards history will be implemented in a future version.
-              </p>
-            </CardContent>
-          </Card>
+          <MyRewards purchases={purchases} rewards={rewards} />
         </TabsContent>
       </Tabs>
     </div>
