@@ -3,8 +3,15 @@
 /**
  * Purchase Form Component
  *
- * This client component provides a form for testing the referral purchase system.
- * It allows a user to enter a referral code and simulate a purchase.
+ * This client component provides a form for testing the referral purchase system
+ * with integrated fraud prevention feedback. It allows users to simulate making
+ * a purchase with a referral code.
+ *
+ * Features:
+ * - Form fields for referral code, amount, and customer information
+ * - Live validation with error feedback
+ * - Submission handling with success/error messaging
+ * - IP address tracking for fraud prevention
  */
 
 import { useState } from "react"
@@ -21,147 +28,192 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { toast } from "@/components/ui/use-toast"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import { CheckCircle2, AlertCircle, DollarSign, Loader2 } from "lucide-react"
+import { AlertCircle, CheckCircle2, DollarSign, Loader2 } from "lucide-react"
 
-/**
- * Interface for the Purchase Form props
- */
 interface PurchaseFormProps {
-  customerId?: string // Optional customer ID if already authenticated
-  customerName?: string // Optional customer name if already known
-  customerEmail?: string // Optional customer email if already known
+  customerId?: string
+  customerName?: string
+  customerEmail?: string
 }
 
-/**
- * Purchase Form Component for testing referral purchases
- */
 export default function PurchaseForm({
   customerId,
   customerName,
   customerEmail
 }: PurchaseFormProps) {
   // Form state
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [formData, setFormData] = useState({
+  const [formState, setFormState] = useState({
     referralCode: "",
-    amount: "100.00",
-    customerName: customerName || "",
-    customerEmail: customerEmail || "",
-    description: "Test purchase"
+    amount: "",
+    name: customerName || "",
+    email: customerEmail || "",
+    phone: ""
   })
 
-  // Results state
+  // Form submission state
+  const [isSubmitting, setIsSubmitting] = useState(false)
   const [result, setResult] = useState<{
     success: boolean
     message: string
-    data?: any
   } | null>(null)
 
-  /**
-   * Handle input changes
-   */
+  // Form field validation
+  const isValidReferralCode = (code: string) =>
+    /^[A-Z0-9]{4}-?[A-Z0-9]{4}$/.test(code)
+  const isValidAmount = (amount: string) =>
+    !isNaN(Number(amount)) && Number(amount) >= 50
+  const isValidEmail = (email: string) =>
+    /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
+  const isValidPhone = (phone: string) => /^\+?[0-9]{10,15}$/.test(phone)
+
+  // Update form state when inputs change
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
-    setFormData(prev => ({ ...prev, [name]: value }))
+
+    // Special handling for referral code formatting
+    if (name === "referralCode") {
+      // If user enters 8 characters without a hyphen, add it
+      if (
+        value.length === 8 &&
+        !value.includes("-") &&
+        value !== formState.referralCode
+      ) {
+        const formatted = `${value.slice(0, 4)}-${value.slice(4)}`
+        setFormState(prev => ({ ...prev, [name]: formatted }))
+        return
+      }
+    }
+
+    setFormState(prev => ({ ...prev, [name]: value }))
   }
 
-  /**
-   * Handle form submission
-   */
+  // Handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsSubmitting(true)
     setResult(null)
 
     try {
-      // Basic validation
-      if (!formData.referralCode.trim()) {
+      // Validate form fields
+      const cleanReferralCode = formState.referralCode.replace(/-/g, "")
+      if (!isValidReferralCode(formState.referralCode)) {
         setResult({
           success: false,
-          message: "Referral code is required"
+          message: "Please enter a valid referral code (8 characters)"
         })
         setIsSubmitting(false)
         return
       }
 
-      if (
-        isNaN(parseFloat(formData.amount)) ||
-        parseFloat(formData.amount) <= 0
-      ) {
+      if (!isValidAmount(formState.amount)) {
         setResult({
           success: false,
-          message: "Please enter a valid amount greater than 0"
+          message: "Amount must be at least $50"
         })
         setIsSubmitting(false)
         return
       }
 
-      if (!formData.customerName.trim() && !customerId) {
+      if (!formState.name.trim()) {
         setResult({
           success: false,
-          message: "Customer name is required for purchases"
+          message: "Please enter your name"
         })
         setIsSubmitting(false)
         return
       }
 
-      // Format the request data
-      const requestData = {
-        referralCode: formData.referralCode.trim(),
-        amount: parseFloat(formData.amount),
-        customerName: formData.customerName.trim(),
-        customerEmail: formData.customerEmail.trim(),
-        customerId, // Pass if provided
-        description: formData.description.trim() || "Purchase via referral"
+      if (formState.email && !isValidEmail(formState.email)) {
+        setResult({
+          success: false,
+          message: "Please enter a valid email address"
+        })
+        setIsSubmitting(false)
+        return
       }
 
-      // Call the API endpoint
+      if (formState.phone && !isValidPhone(formState.phone)) {
+        setResult({
+          success: false,
+          message: "Please enter a valid phone number"
+        })
+        setIsSubmitting(false)
+        return
+      }
+
+      // Prepare the request payload
+      const payload = {
+        referralCode: cleanReferralCode,
+        amount: parseFloat(formState.amount),
+        customerName: formState.name,
+        customerEmail: formState.email,
+        customerPhone: formState.phone,
+        customerId
+      }
+
+      // Make API request to create purchase
       const response = await fetch("/api/purchases", {
         method: "POST",
         headers: {
           "Content-Type": "application/json"
         },
-        body: JSON.stringify(requestData)
+        body: JSON.stringify(payload)
       })
 
-      const responseData = await response.json()
+      const data = await response.json()
 
-      if (response.ok && responseData.success) {
+      if (data.success) {
         setResult({
           success: true,
-          message: "Purchase created successfully!",
-          data: responseData.data
+          message: "Purchase created successfully with referral code"
         })
 
-        // Show success notification
-        toast({
-          title: "Purchase successful",
-          description:
-            "The purchase has been recorded and a reward is pending approval"
-        })
-
-        // Reset form
-        setFormData({
+        // Reset form on success
+        setFormState({
           referralCode: "",
-          amount: "100.00",
-          customerName: customerName || "",
-          customerEmail: customerEmail || "",
-          description: "Test purchase"
+          amount: "",
+          name: customerName || "",
+          email: customerEmail || "",
+          phone: ""
+        })
+
+        toast({
+          title: "Success",
+          description: "Your purchase has been processed successfully"
         })
       } else {
+        let errorMessage = data.message
+
+        // Provide more user-friendly messages for fraud detection
+        if (errorMessage.includes("Fraud detection:")) {
+          errorMessage = errorMessage.replace("Fraud detection: ", "")
+
+          // Check for common fraud reasons and give clearer messages
+          if (errorMessage.includes("email")) {
+            errorMessage =
+              "Your email address must be verified before making a purchase."
+          } else if (errorMessage.includes("minimum")) {
+            errorMessage = "Purchase amount must be at least $50."
+          } else if (errorMessage.includes("self-referral")) {
+            errorMessage =
+              "You cannot use your own referral code or one from the same household."
+          } else if (errorMessage.includes("IP address")) {
+            errorMessage =
+              "Too many purchases detected from your location. Please try again later."
+          }
+        }
+
         setResult({
           success: false,
-          message: responseData.message || "Failed to process purchase"
+          message: errorMessage
         })
       }
     } catch (error) {
-      console.error("Error processing purchase:", error)
+      console.error("Error creating purchase:", error)
       setResult({
         success: false,
         message:
-          error instanceof Error
-            ? error.message
-            : "An unexpected error occurred"
+          error instanceof Error ? error.message : "An unknown error occurred"
       })
     } finally {
       setIsSubmitting(false)
@@ -169,12 +221,11 @@ export default function PurchaseForm({
   }
 
   return (
-    <Card className="mx-auto max-w-md">
+    <Card className="w-full">
       <CardHeader>
         <CardTitle>Make a Purchase with Referral</CardTitle>
         <CardDescription>
-          Enter a referral code to simulate a purchase and test the referral
-          system
+          Enter a referral code and purchase details to test the system
         </CardDescription>
       </CardHeader>
 
@@ -191,83 +242,120 @@ export default function PurchaseForm({
             )}
             <AlertTitle>{result.success ? "Success" : "Error"}</AlertTitle>
             <AlertDescription>{result.message}</AlertDescription>
-
-            {result.success && result.data && (
-              <div className="mt-2 text-xs">
-                <p>Purchase ID: {result.data.purchase.id}</p>
-                {result.data.reward && (
-                  <p>Reward ID: {result.data.reward.id}</p>
-                )}
-              </div>
-            )}
           </Alert>
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
+          <div className="grid gap-2">
             <Label htmlFor="referralCode">Referral Code</Label>
             <Input
               id="referralCode"
               name="referralCode"
-              placeholder="Enter referral code"
-              value={formData.referralCode}
+              placeholder="ABCD-1234"
+              value={formState.referralCode}
               onChange={handleChange}
-              required
+              className={
+                formState.referralCode &&
+                !isValidReferralCode(formState.referralCode)
+                  ? "border-red-500"
+                  : ""
+              }
             />
+            {formState.referralCode &&
+              !isValidReferralCode(formState.referralCode) && (
+                <p className="text-xs text-red-500">
+                  Please enter a valid 8-character referral code
+                </p>
+              )}
           </div>
 
-          <div className="space-y-2">
+          <div className="grid gap-2">
             <Label htmlFor="amount">Purchase Amount ($)</Label>
-            <Input
-              id="amount"
-              name="amount"
-              type="number"
-              step="0.01"
-              min="0.01"
-              placeholder="100.00"
-              value={formData.amount}
-              onChange={handleChange}
-              required
-            />
+            <div className="relative">
+              <DollarSign className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-gray-500" />
+              <Input
+                id="amount"
+                name="amount"
+                type="number"
+                min="50"
+                placeholder="50.00"
+                value={formState.amount}
+                onChange={handleChange}
+                className={`pl-10 ${formState.amount && !isValidAmount(formState.amount) ? "border-red-500" : ""}`}
+              />
+            </div>
+            {formState.amount && !isValidAmount(formState.amount) && (
+              <p className="text-xs text-red-500">
+                Minimum purchase amount is $50
+              </p>
+            )}
+            <p className="text-muted-foreground text-xs">
+              Minimum purchase: $50.00
+            </p>
           </div>
 
-          {!customerId && (
-            <>
-              <div className="space-y-2">
-                <Label htmlFor="customerName">Customer Name</Label>
-                <Input
-                  id="customerName"
-                  name="customerName"
-                  placeholder="John Doe"
-                  value={formData.customerName}
-                  onChange={handleChange}
-                  required
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="customerEmail">Customer Email</Label>
-                <Input
-                  id="customerEmail"
-                  name="customerEmail"
-                  type="email"
-                  placeholder="customer@example.com"
-                  value={formData.customerEmail}
-                  onChange={handleChange}
-                />
-              </div>
-            </>
+          {/* Only show name field if not provided via props */}
+          {!customerName && (
+            <div className="grid gap-2">
+              <Label htmlFor="name">Your Name</Label>
+              <Input
+                id="name"
+                name="name"
+                placeholder="John Doe"
+                value={formState.name}
+                onChange={handleChange}
+                required
+              />
+            </div>
           )}
 
-          <div className="space-y-2">
-            <Label htmlFor="description">Description</Label>
+          {/* Only show email field if not provided via props */}
+          {!customerEmail && (
+            <div className="grid gap-2">
+              <Label htmlFor="email">Email Address</Label>
+              <Input
+                id="email"
+                name="email"
+                type="email"
+                placeholder="john@example.com"
+                value={formState.email}
+                onChange={handleChange}
+                className={
+                  formState.email && !isValidEmail(formState.email)
+                    ? "border-red-500"
+                    : ""
+                }
+              />
+              {formState.email && !isValidEmail(formState.email) && (
+                <p className="text-xs text-red-500">
+                  Please enter a valid email address
+                </p>
+              )}
+              <p className="text-muted-foreground text-xs">
+                Verified email required for fraud prevention
+              </p>
+            </div>
+          )}
+
+          <div className="grid gap-2">
+            <Label htmlFor="phone">Phone Number</Label>
             <Input
-              id="description"
-              name="description"
-              placeholder="House painting service"
-              value={formData.description}
+              id="phone"
+              name="phone"
+              placeholder="+1 (555) 123-4567"
+              value={formState.phone}
               onChange={handleChange}
+              className={
+                formState.phone && !isValidPhone(formState.phone)
+                  ? "border-red-500"
+                  : ""
+              }
             />
+            {formState.phone && !isValidPhone(formState.phone) && (
+              <p className="text-xs text-red-500">
+                Please enter a valid phone number
+              </p>
+            )}
           </div>
         </form>
       </CardContent>
@@ -284,10 +372,7 @@ export default function PurchaseForm({
               Processing...
             </>
           ) : (
-            <>
-              <DollarSign className="mr-2 size-4" />
-              Complete Purchase
-            </>
+            "Complete Purchase"
           )}
         </Button>
       </CardFooter>

@@ -9,6 +9,7 @@
 import { createPurchaseAction } from "@/actions/db/purchases-actions"
 import { createRewardAction } from "@/actions/db/rewards-actions"
 import { getUserByIdAction } from "@/actions/db/users-actions"
+import { validatePurchaseAction } from "@/actions/fraud/fraud-detection-actions"
 import {
   sendReferralUsedNotificationAction,
   sendAdminReferralNotificationAction
@@ -101,6 +102,25 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       }
 
       customerId = customerUser.data.id
+    }
+
+    // Run fraud checks before creating the purchase
+    const fraudCheckResult = await validatePurchaseAction(
+      referralCode,
+      ipAddress,
+      parseFloat(amount),
+      customerEmail
+    )
+
+    // If fraud checks fail, return the error
+    if (!fraudCheckResult.isSuccess) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: `Fraud detection: ${fraudCheckResult.message}`
+        },
+        { status: 400 }
+      )
     }
 
     // Create the purchase record
