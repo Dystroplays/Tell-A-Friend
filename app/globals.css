@@ -1,10 +1,8 @@
 /*
 <ai_context>
-Global styles for the app.
+Global styles for the app, integrating Tailwind CSS with custom branding, accessibility, and responsiveness.
 </ai_context>
 */
-
-@import url('https://fonts.googleapis.com/css2?family=Dunbar:wght@400;500;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -13,22 +11,25 @@ Global styles for the app.
 @layer base {
   :root {
     /* Main colors based on design requirements */
-    --tell-a-friend-green: 154 51% 33%; /* #00A86B */
-    --tell-a-friend-black: 0 0% 0%; /* #000000 */
-    --tell-a-friend-white: 0 0% 100%; /* #FFFFFF */
-    --tell-a-friend-background: 0 0% 96%; /* #F5F5F5 */
-    --tell-a-friend-text: 0 0% 20%; /* #333333 */
-    
+    --primary-green: 154 51% 33%; /* #00A86B */
+    --light-green: 140 48% 91%; /* #E6F4EA */
+    --dark-green: 120 100% 20%; /* #006400 */
+    --secondary: 0 0% 20%; /* #333333 */
+    --text: 0 0% 20%; /* #333333 */
+    --error: 0 100% 50%; /* #FF0000 */
+    --success: 154 51% 33%; /* #00A86B */
+    --warning: 39 100% 50%; /* #FFA500 */
+
     /* Default UI colors */
-    --background: var(--tell-a-friend-background);
-    --foreground: var(--tell-a-friend-text);
-    --card: var(--tell-a-friend-white);
-    --card-foreground: var(--tell-a-friend-text);
-    --popover: var(--tell-a-friend-white);
-    --popover-foreground: var(--tell-a-friend-text);
-    --primary: var(--tell-a-friend-green);
-    --primary-foreground: var(--tell-a-friend-white);
-    --secondary: 0 0% 96.1%;
+    --background: 0 0% 100%;
+    --foreground: var(--text);
+    --card: 0 0% 100%;
+    --card-foreground: var(--text);
+    --popover: 0 0% 100%;
+    --popover-foreground: var(--text);
+    --primary: var(--primary-green);
+    --primary-foreground: 0 0% 100%;
+    --secondary-background: 0 0% 96.1%;
     --secondary-foreground: 0 0% 9%;
     --muted: 0 0% 96.1%;
     --muted-foreground: 0 0% 45.1%;
@@ -38,34 +39,33 @@ Global styles for the app.
     --destructive-foreground: 0 0% 98%;
     --border: 0 0% 89.8%;
     --input: 0 0% 89.8%;
-    --ring: var(--tell-a-friend-green);
+    --ring: var(--primary-green);
     --radius: 0.5rem;
     --chart-1: 154 51% 33%;
     --chart-2: 173 58% 39%;
     --chart-3: 197 37% 24%;
     --chart-4: 43 74% 66%;
     --chart-5: 27 87% 67%;
-    --sidebar-background: var(--tell-a-friend-white);
-    --sidebar-foreground: var(--tell-a-friend-text);
-    --sidebar-primary: var(--tell-a-friend-green);
-    --sidebar-primary-foreground: var(--tell-a-friend-white);
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: var(--text);
+    --sidebar-primary: var(--primary-green);
+    --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 240 4.8% 95.9%;
     --sidebar-accent-foreground: 240 5.9% 10%;
     --sidebar-border: 220 13% 91%;
-    --sidebar-ring: var(--tell-a-friend-green);
-    --font-dunbar: var(--font-dunbar);
+    --sidebar-ring: var(--primary-green);
   }
 
   .dark {
-    --background: var(--tell-a-friend-black);
-    --foreground: var(--tell-a-friend-white);
+    --background: 0 0% 3.9%;
+    --foreground: 0 0% 98%;
     --card: 0 0% 3.9%;
-    --card-foreground: var(--tell-a-friend-white);
+    --card-foreground: 0 0% 98%;
     --popover: 0 0% 3.9%;
-    --popover-foreground: var(--tell-a-friend-white);
-    --primary: var(--tell-a-friend-green);
-    --primary-foreground: var(--tell-a-friend-white);
-    --secondary: 0 0% 14.9%;
+    --popover-foreground: 0 0% 98%;
+    --primary: var(--primary-green);
+    --primary-foreground: 0 0% 98%;
+    --secondary-background: 0 0% 14.9%;
     --secondary-foreground: 0 0% 98%;
     --muted: 0 0% 14.9%;
     --muted-foreground: 0 0% 63.9%;
@@ -75,7 +75,7 @@ Global styles for the app.
     --destructive-foreground: 0 0% 98%;
     --border: 0 0% 14.9%;
     --input: 0 0% 14.9%;
-    --ring: var(--tell-a-friend-green);
+    --ring: var(--primary-green);
     --chart-1: 220 70% 50%;
     --chart-2: 160 60% 45%;
     --chart-3: 30 80% 55%;
@@ -83,80 +83,159 @@ Global styles for the app.
     --chart-5: 340 75% 55%;
     --sidebar-background: 240 5.9% 10%;
     --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: var(--tell-a-friend-green);
-    --sidebar-primary-foreground: var(--tell-a-friend-white);
+    --sidebar-primary: var(--primary-green);
+    --sidebar-primary-foreground: 0 0% 98%;
     --sidebar-accent: 240 3.7% 15.9%;
     --sidebar-accent-foreground: 240 4.8% 95.9%;
     --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: var(--tell-a-friend-green);
+    --sidebar-ring: var(--primary-green);
   }
-}
 
-@layer base {
   * {
-    @apply border-border;
+    border-color: hsl(var(--border));
   }
+
   body {
-    @apply bg-background text-foreground;
-    font-family: 'Dunbar', sans-serif;
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+    font-family: 'Inter', sans-serif;
   }
+
   h1, h2, h3, h4, h5, h6 {
-    font-family: 'Dunbar', sans-serif;
+    font-family: 'Inter', sans-serif;
     font-weight: 700;
   }
+
   h1 {
-    font-size: 32px;
-  }
-  h2 {
     font-size: 24px;
+    line-height: 1.2;
   }
-  h3 {
+
+  h2 {
     font-size: 20px;
+    line-height: 1.2;
   }
+
+  h3 {
+    font-size: 18px;
+    line-height: 1.2;
+  }
+
   p, span, div, button, input, textarea, select {
-    font-family: 'Dunbar', sans-serif;
-    font-size: 16px;
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    line-height: 1.5;
   }
 }
 
-/* Accessibility-focused styles */
-@layer utilities {
+@layer components {
+  /* Accessibility-focused styles */
   .focus-visible {
-    @apply outline-none ring-2 ring-offset-2 ring-primary transition-colors;
+    outline: none;
+    box-shadow: 0 0 0 2px hsl(var(--background)), 0 0 0 4px hsl(var(--primary));
+    transition: box-shadow 0.2s, color 0.2s, background-color 0.2s;
   }
-  
+
   /* High contrast text for better readability */
   .high-contrast-text {
-    @apply text-tell-a-friend-black dark:text-tell-a-friend-white;
+    color: hsl(var(--text));
   }
-  
-  /* Accessible button styles with proper hover/focus states */
-  .btn-accessible {
-    @apply rounded-md bg-tell-a-friend-green px-4 py-2 text-white transition-colors hover:bg-tell-a-friend-green/90 focus:outline-none focus:ring-2 focus:ring-tell-a-friend-green focus:ring-offset-2;
+  .dark .high-contrast-text {
+    color: hsl(var(--background));
   }
-  
-  /* Ensure proper text contrast for important UI elements */
-  .text-accessible {
-    @apply text-tell-a-friend-text dark:text-tell-a-friend-white;
-  }
-}
 
-/* Mobile responsiveness utilities */
-@layer utilities {
+  /* Accessible button styles */
+  .btn-accessible {
+    border-radius: 0.375rem;
+    background-color: hsl(var(--primary-green));
+    padding: 0.5rem 1rem;
+    color: white;
+    transition-property: color, background-color;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    transition-duration: 150ms;
+  }
+  .btn-accessible:hover {
+    background-color: rgba(0, 168, 107, 0.9); /* #00A86B with 90% opacity */
+  }
+  .btn-accessible:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px hsl(var(--background)), 0 0 0 4px hsl(var(--primary-green));
+  }
+
+  /* Text contrast for accessibility */
+  .text-accessible {
+    color: hsl(var(--text));
+  }
+  .dark .text-accessible {
+    color: hsl(var(--background));
+  }
+
+  /* Mobile-first responsive utilities */
   .responsive-container {
-    @apply mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8;
+    margin-left: auto;
+    margin-right: auto;
+    width: 100%;
+    max-width: 80rem;
+    padding-left: 1rem;
+    padding-right: 1rem;
   }
-  
+  @media (min-width: 640px) {
+    .responsive-container {
+      padding-left: 1.5rem;
+      padding-right: 1.5rem;
+    }
+  }
+  @media (min-width: 1024px) {
+    .responsive-container {
+      padding-left: 2rem;
+      padding-right: 2rem;
+    }
+  }
+
   .responsive-grid {
-    @apply grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4;
+    display: grid;
+    grid-template-columns: repeat(1, minmax(0, 1fr));
+    gap: 1rem;
   }
-  
+  @media (min-width: 640px) {
+    .responsive-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+  @media (min-width: 1024px) {
+    .responsive-grid {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+  }
+  @media (min-width: 1280px) {
+    .responsive-grid {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+  }
+
   .responsive-flex {
-    @apply flex flex-col space-y-4 md:flex-row md:space-x-4 md:space-y-0;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
   }
-  
-  /* Mobile-first card styling */
+  @media (min-width: 768px) {
+    .responsive-flex {
+      flex-direction: row;
+      gap: 1rem;
+      margin-top: 0;
+    }
+  }
+
   .responsive-card {
-    @apply rounded-lg border bg-card p-4 shadow-sm md:p-6;
+    border-radius: 0.5rem;
+    border: 1px solid hsl(var(--border));
+    background-color: hsl(var(--card));
+    padding: 1rem;
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  }
+  @media (min-width: 768px) {
+    .responsive-card {
+      padding: 1.5rem;
+    }
   }
 }

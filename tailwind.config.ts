@@ -4,11 +4,10 @@ Configures Tailwind CSS for the app.
 </ai_context>
 */
 
-
 import type { Config } from "tailwindcss"
 
 const config = {
-  darkMode: ["class"],
+  darkMode: "class",
   content: [
     "./pages/**/*.{ts,tsx}",
     "./components/**/*.{ts,tsx}",
@@ -26,10 +25,10 @@ const config = {
     },
     extend: {
       fontFamily: {
-        dunbar: ['Dunbar', 'sans-serif'],
+        inter: ['Inter', 'sans-serif'],
       },
       colors: {
-        // Tell a Friend specific colors
+        // Tell a Friend specific colors (for backward compatibility)
         "tell-a-friend": {
           green: "#00A86B",
           black: "#000000",
@@ -37,6 +36,14 @@ const config = {
           background: "#F5F5F5",
           text: "#333333",
         },
+        // Design system colors (at root level for easier access)
+        "primary-green": "#00A86B",
+        "light-green": "#E6F4EA",
+        "dark-green": "#006400",
+        "text": "#333333",
+        "error": "#FF0000",
+        "success": "#00A86B",
+        "warning": "#FFA500",
         // Default shadcn colors
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",

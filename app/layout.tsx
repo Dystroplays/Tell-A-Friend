@@ -27,11 +27,12 @@ import "./globals.css"
 import { v4 as uuidv4 } from "uuid"
 import { generateReferralCode } from "@/lib/referral-utils"
 
-// Load inter font
+
+// Load Inter font
 const inter = Inter({
   subsets: ["latin"],
   weight: ["400", "500", "700"],
-  variable: "--font-Inter"
+  variable: "--font-inter"
 })
 
 export const metadata: Metadata = {
@@ -110,14 +111,14 @@ export default async function RootLayout({
       appearance={{
         elements: {
           formButtonPrimary:
-            "bg-tell-a-friend-green hover:bg-tell-a-friend-green/90",
+            "bg-primary-green hover:bg-primary-green/90",
           footerActionLink:
-            "text-tell-a-friend-green hover:text-tell-a-friend-green/90"
+            "text-primary-green hover:text-primary-green/90"
         }
       }}
     >
       <html lang="en" suppressHydrationWarning>
-        <body className={cn(inter.className)}>
+        <body className={cn(inter.variable, inter.className)}>
           <Providers
             attribute="class"
             defaultTheme="light"

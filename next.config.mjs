@@ -12,9 +12,7 @@ const nextConfig = {
       { hostname: "fonts.googleapis.com" }, // For loading Google fonts
       { hostname: "fonts.gstatic.com" } // For loading Google fonts
     ]
-  },
-  // Configure Next.js to optimize font loading
-  optimizeFonts: true
+  }
 }
 
 export default nextConfig
